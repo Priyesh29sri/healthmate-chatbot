@@ -7,7 +7,7 @@ from langchain.chains import RetrievalQA
 from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
 from langchain_core.prompts import PromptTemplate
 
-# Load Data
+# Load CSV data and convert each row into a Document for RAG retrieval
 @st.cache_resource(show_spinner=False)
 def load_data(file_path):
     df = pd.read_csv(file_path)
@@ -17,13 +17,17 @@ def load_data(file_path):
         documents.append(Document(page_content=text))
     return documents
 
-# Setup RAG with Prompt
+# Setup RAG with embeddings and LLM
 @st.cache_resource(show_spinner=True)
 def setup_rag(_documents):
+    # Initialize embedding model
     embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    # Create FAISS vector store from documents
     vectorstore = FAISS.from_documents(_documents, embedding_model)
+    # Set retriever to find relevant documents (top 1)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 1})
-
+    
+    # Load HuggingFace text-to-text generation model pipeline (FLAN-T5)
     llm_pipeline = pipeline("text2text-generation", model="google/flan-t5-small", max_length=256)
     llm = HuggingFacePipeline(pipeline=llm_pipeline)
 
@@ -35,7 +39,8 @@ def setup_rag(_documents):
 
     Question: {question}
     """)
-
+    
+    # Create RetrievalQA chain with the LLM, retriever, and custom prompt
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=retriever,
@@ -45,7 +50,7 @@ def setup_rag(_documents):
     )
     return qa_chain
 
-# Main Streamlit UI
+# Streamlit UI
 st.title("HealthMate Chronic Disease Chatbot ❤️")
 
 file_path = "/Users/priyeshsrivastava/Downloads/train.csv"
@@ -62,7 +67,7 @@ if st.button("Ask") and query.strip():
     answer = response["result"]
     st.session_state.chat_history.append((query, answer))
 
-# Display chat
+# Display chat history questions and answers 
 for q, a in st.session_state.chat_history:
     st.markdown(f"**You:** {q}")
     st.markdown(f"**Bot:** {a}")
