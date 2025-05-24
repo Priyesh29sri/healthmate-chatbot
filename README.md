@@ -10,3 +10,5 @@ Tech Stack:
 Streamlit:
 Local URL: http://localhost:8501
 Network URL: http://192.168.220.202:8501
+
+ I am the sole contributor to this project. The additional GitHub contributor was added due to a commit from a shared system, but all work is entirely my own.
