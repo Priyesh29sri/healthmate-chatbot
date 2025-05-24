@@ -31,6 +31,7 @@ def setup_rag(_documents):
     llm_pipeline = pipeline("text2text-generation", model="google/flan-t5-small", max_length=256)
     llm = HuggingFacePipeline(pipeline=llm_pipeline)
 
+    # Define prompt template for contextual question answering
     prompt = PromptTemplate.from_template("""
     You are a helpful AI assistant for answering questions about chronic diseases.
     Use the following context to answer the question as accurately as possible.
